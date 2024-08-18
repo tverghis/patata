@@ -1,5 +1,5 @@
 const MEMORY_SIZE_BYTES: usize = 4096;
-const PROG_CTR_START_ADDR: u16 = 0x200;
+const PROG_CTR_START_ADDR: usize = 0x200;
 const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
 
 const FONT_SET: [u8; 5 * 16] = [
@@ -28,7 +28,7 @@ pub struct Chip8 {
     // `index` needs to hold the maximum possible address in `memory`
     pub index: u16,
     // `program_counter` needs to hold the maximum possible address in `memory`
-    pub program_counter: u16,
+    pub program_counter: usize,
     // `stack` needs to hold up to 16 different `program_counter`s
     pub stack: [u16; 16],
     pub stack_pointer: u8,
@@ -78,8 +78,7 @@ impl Chip8 {
             );
         }
 
-        let src_copy_range =
-            (PROG_CTR_START_ADDR as usize)..(PROG_CTR_START_ADDR as usize + nbytes);
+        let src_copy_range = PROG_CTR_START_ADDR..(PROG_CTR_START_ADDR + nbytes);
 
         self.memory[src_copy_range].copy_from_slice(bytes);
 
