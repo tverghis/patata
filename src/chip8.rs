@@ -1,3 +1,5 @@
+use crate::opcode::OpCode;
+
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: usize = 0x200;
 const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
@@ -84,6 +86,26 @@ impl Chip8 {
 
         Ok(())
     }
+
+    fn next_opcode(&mut self) -> OpCode {
+        // Opcodes are 2 bytes long.
+        // `program_counter` must always point to at least 1 less than the last memory index,
+        // to allow taking 2 bytes.
+        assert!(
+            self.program_counter + 1 < MEMORY_SIZE_BYTES,
+            "program counter too large ({})",
+            self.program_counter
+        );
+
+        let opcode = OpCode::from((
+            self.memory[self.program_counter],
+            self.memory[self.program_counter + 1],
+        ));
+
+        self.program_counter += 2;
+
+        opcode
+    }
 }
 
 #[cfg(test)]
@@ -139,5 +161,19 @@ mod test {
         let c = Chip8::default();
 
         assert_eq!(FONT_SET, c.memory[0x50..(0x50 + FONT_SET.len())]);
+    }
+
+    #[test]
+    fn next_opcode() {
+        let mut c = Chip8::default();
+        c.load_rom_bytes(&[0xDE, 0xAD, 0xBE, 0xEF]).unwrap();
+
+        let opcode = c.next_opcode();
+        assert_eq!(OpCode::from((0xDE, 0xAD)), opcode);
+        assert_eq!(PROG_CTR_START_ADDR + 2, c.program_counter);
+
+        let opcode = c.next_opcode();
+        assert_eq!(OpCode::from((0xBE, 0xEF)), opcode);
+        assert_eq!(PROG_CTR_START_ADDR + 4, c.program_counter);
     }
 }
