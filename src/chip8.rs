@@ -111,6 +111,20 @@ impl Chip8 {
         self.stack_pointer += 1;
         self.program_counter = opcode.nnn();
     }
+
+    /// 3xkk: SE Vx, byte
+    fn skip_if_eq(&mut self, opcode: OpCode) {
+        if self.registers[opcode.x() as usize] == opcode.kk() {
+            self.program_counter += 2;
+        }
+    }
+
+    /// 4xkk: SNE Vx, byte
+    fn skip_if_neq(&mut self, opcode: OpCode) {
+        if self.registers[opcode.x() as usize] != opcode.kk() {
+            self.program_counter += 2;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -209,5 +223,33 @@ mod test {
         assert_eq!(0xFED, c.stack[0]);
         assert_eq!(1, c.stack_pointer);
         assert_eq!(0xBED, c.program_counter);
+    }
+
+    #[test]
+    fn skip_eq() {
+        let mut c = Chip8::default();
+        let old_pc = c.program_counter;
+
+        c.registers[0] = 0xFF;
+
+        c.skip_if_eq(OpCode::from((0x00, 0xFF)));
+        assert_eq!(old_pc + 2, c.program_counter);
+
+        c.skip_if_eq(OpCode::from((0x00, 0xAA)));
+        assert_eq!(old_pc + 2, c.program_counter);
+    }
+
+    #[test]
+    fn skip_neq() {
+        let mut c = Chip8::default();
+        let old_pc = c.program_counter;
+
+        c.registers[0] = 0xFF;
+
+        c.skip_if_neq(OpCode::from((0x00, 0xFF)));
+        assert_eq!(old_pc, c.program_counter);
+
+        c.skip_if_neq(OpCode::from((0x00, 0xAA)));
+        assert_eq!(old_pc + 2, c.program_counter);
     }
 }
