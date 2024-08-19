@@ -4,7 +4,7 @@ pub struct OpCode {
 }
 
 impl OpCode {
-    pub fn nibbles(&self) -> (u8, u8, u8, u8) {
+    pub fn nibbles(self) -> (u8, u8, u8, u8) {
         (
             ((self.inner & 0xF000) >> 12) as u8,
             ((self.inner & 0x0F00) >> 8) as u8,
@@ -13,23 +13,23 @@ impl OpCode {
         )
     }
 
-    pub fn nnn(&self) -> u16 {
+    pub fn nnn(self) -> u16 {
         self.inner & 0x0FFF
     }
 
-    pub fn kk(&self) -> u8 {
+    pub fn kk(self) -> u8 {
         (self.inner & 0x00FF) as u8
     }
 
-    pub fn x(&self) -> u8 {
+    pub fn x(self) -> u8 {
         self.nibbles().1
     }
 
-    pub fn y(&self) -> u8 {
+    pub fn y(self) -> u8 {
         self.nibbles().2
     }
 
-    pub fn n(&self) -> u8 {
+    pub fn n(self) -> u8 {
         self.nibbles().3
     }
 }
