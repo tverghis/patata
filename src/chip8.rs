@@ -118,6 +118,18 @@ impl Chip8 {
         self.stack_pointer -= 1;
         self.program_counter = self.stack[self.stack_pointer as usize];
     }
+
+    /// 1nnn: JP addr
+    fn jump_to_addr(&mut self, opcode: OpCode) {
+        self.program_counter = opcode.nnn();
+    }
+
+    /// 2nnn: CALL addr
+    fn call_sub(&mut self, opcode: OpCode) {
+        self.stack[self.stack_pointer as usize] = self.program_counter;
+        self.stack_pointer += 1;
+        self.program_counter = opcode.nnn();
+    }
 }
 
 #[cfg(test)]
@@ -197,5 +209,24 @@ mod test {
         c.clear_display();
 
         assert!(c.display.iter().all(|&i| i == 0));
+    }
+
+    #[test]
+    fn jp_addr() {
+        let mut c = Chip8::default();
+        c.jump_to_addr(OpCode::from((0x0B, 0xED)));
+
+        assert_eq!(0xBED, c.program_counter);
+    }
+
+    #[test]
+    fn call_addr() {
+        let mut c = Chip8::default();
+        c.program_counter = 0xFED;
+        c.call_sub(OpCode::from((0x0B, 0xED)));
+
+        assert_eq!(0xFED, c.stack[0]);
+        assert_eq!(1, c.stack_pointer);
+        assert_eq!(0xBED, c.program_counter);
     }
 }
