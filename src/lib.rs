@@ -1,3 +1,4 @@
-mod chip8;
 mod fonts;
 mod opcode;
+
+pub mod chip8;
