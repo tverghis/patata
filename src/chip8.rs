@@ -6,18 +6,18 @@ const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
 
 #[derive(Debug, Clone)]
 pub struct Chip8 {
-    pub registers: [u8; 16],
-    pub memory: [u8; MEMORY_SIZE_BYTES],
+    registers: [u8; 16],
+    memory: [u8; MEMORY_SIZE_BYTES],
     // `index` needs to hold the maximum possible address in `memory`
-    pub index: u16,
+    index: u16,
     // `program_counter` needs to hold the maximum possible address in `memory`
-    pub program_counter: u16,
-    pub stack: [u16; 16],
-    pub stack_pointer: u8,
-    pub delay_timer: u8,
-    pub sound_timer: u8,
-    pub keypad: [u8; 16],
-    pub display: [u8; 64 * 32],
+    program_counter: u16,
+    stack: [u16; 16],
+    stack_pointer: u8,
+    delay_timer: u8,
+    sound_timer: u8,
+    keypad: [u8; 16],
+    display: [u8; 64 * 32],
 }
 
 impl Default for Chip8 {
