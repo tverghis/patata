@@ -29,11 +29,9 @@ pub struct Chip8 {
     pub memory: [u8; MEMORY_SIZE_BYTES],
     // `index` needs to hold the maximum possible address in `memory`
     pub index: u16,
-    // `program_counter` needs to hold the maximum possible address in `memory`
     pub program_counter: usize,
-    // `stack` needs to hold up to 16 different `program_counter`s
-    pub stack: [u16; 16],
-    pub stack_pointer: u8,
+    pub stack: [usize; 16],
+    pub stack_pointer: usize,
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub keypad: [u8; 16],
@@ -106,6 +104,18 @@ impl Chip8 {
 
         opcode
     }
+
+    /// 00E0: CLS
+    fn clear_display(&mut self) {
+        self.display.fill(0);
+    }
+
+    /// 00EE: RET
+    fn ret_from_sub(&mut self) {
+        // TODO: ensure SP and PC are valid values
+        self.stack_pointer -= 1;
+        self.program_counter = self.stack[self.stack_pointer];
+    }
 }
 
 #[cfg(test)]
@@ -175,5 +185,15 @@ mod test {
         let opcode = c.next_opcode();
         assert_eq!(OpCode::from((0xBE, 0xEF)), opcode);
         assert_eq!(PROG_CTR_START_ADDR + 4, c.program_counter);
+    }
+
+    #[test]
+    fn cls() {
+        let mut c = Chip8::default();
+        c.display.fill(99);
+
+        c.clear_display();
+
+        assert!(c.display.iter().all(|&i| i == 0));
     }
 }
