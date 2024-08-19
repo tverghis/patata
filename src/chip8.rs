@@ -1,7 +1,7 @@
 use crate::opcode::OpCode;
 
 const MEMORY_SIZE_BYTES: usize = 4096;
-const PROG_CTR_START_ADDR: usize = 0x200;
+const PROG_CTR_START_ADDR: u16 = 0x200;
 const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
 
 const FONT_SET: [u8; 5 * 16] = [
@@ -29,9 +29,10 @@ pub struct Chip8 {
     pub memory: [u8; MEMORY_SIZE_BYTES],
     // `index` needs to hold the maximum possible address in `memory`
     pub index: u16,
-    pub program_counter: usize,
-    pub stack: [usize; 16],
-    pub stack_pointer: usize,
+    // `program_counter` needs to hold the maximum possible address in `memory`
+    pub program_counter: u16,
+    pub stack: [u16; 16],
+    pub stack_pointer: u8,
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub keypad: [u8; 16],
@@ -78,7 +79,8 @@ impl Chip8 {
             );
         }
 
-        let src_copy_range = PROG_CTR_START_ADDR..(PROG_CTR_START_ADDR + nbytes);
+        let src_copy_range =
+            (PROG_CTR_START_ADDR as usize)..(PROG_CTR_START_ADDR as usize + nbytes);
 
         self.memory[src_copy_range].copy_from_slice(bytes);
 
@@ -90,14 +92,14 @@ impl Chip8 {
         // `program_counter` must always point to at least 1 less than the last memory index,
         // to allow taking 2 bytes.
         assert!(
-            self.program_counter + 1 < MEMORY_SIZE_BYTES,
+            (self.program_counter as usize + 1) < MEMORY_SIZE_BYTES,
             "program counter too large ({})",
             self.program_counter
         );
 
         let opcode = OpCode::from((
-            self.memory[self.program_counter],
-            self.memory[self.program_counter + 1],
+            self.memory[self.program_counter as usize],
+            self.memory[self.program_counter as usize + 1],
         ));
 
         self.program_counter += 2;
@@ -114,7 +116,7 @@ impl Chip8 {
     fn ret_from_sub(&mut self) {
         // TODO: ensure SP and PC are valid values
         self.stack_pointer -= 1;
-        self.program_counter = self.stack[self.stack_pointer];
+        self.program_counter = self.stack[self.stack_pointer as usize];
     }
 }
 
