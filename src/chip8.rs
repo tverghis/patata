@@ -66,7 +66,7 @@ impl Chip8 {
             (0x04, _, _, _) => self.op_4xkk(opcode),
             (0x05, _, _, 0x00) => self.op_5xy0(opcode),
             (0x06, _, _, _) => self.op_6xkk(opcode),
-            (0x07, _, _, _) => unimplemented!(),
+            (0x07, _, _, _) => self.op_7xkk(opcode),
             (0x08, _, _, 0x00) => unimplemented!(),
             (0x08, _, _, 0x01) => unimplemented!(),
             (0x08, _, _, 0x02) => unimplemented!(),
@@ -196,6 +196,12 @@ impl Chip8 {
     fn op_6xkk(&mut self, opcode: OpCode) {
         trace!("LD Vx, byte {:?}", opcode);
         self.registers[opcode.x() as usize] = opcode.kk();
+    }
+
+    /// ADD Vx, byte
+    fn op_7xkk(&mut self, opcode: OpCode) {
+        trace!("ADD Vx, byte {:?}", opcode);
+        self.registers[opcode.x() as usize] += opcode.kk();
     }
 }
 
@@ -348,5 +354,16 @@ mod test {
 
         c.op_6xkk(opcode);
         assert_eq!(0xFF, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn add_byte() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x7F, 0x01));
+
+        c.registers[0x0F] = 0x01;
+
+        c.op_7xkk(opcode);
+        assert_eq!(0x02, c.registers[0x0F]);
     }
 }
