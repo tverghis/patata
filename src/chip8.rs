@@ -53,6 +53,7 @@ impl Chip8 {
         self.load_rom_bytes(&file_bytes)
     }
 
+    // Reference: https://austinmorlan.com/posts/chip8_emulator/
     pub fn tick(&mut self) {
         let opcode = self.next_opcode();
 
@@ -65,7 +66,33 @@ impl Chip8 {
             (0x04, _, _, _) => self.op_4xkk(opcode),
             (0x05, _, _, 0x00) => self.op_5xy0(opcode),
             (0x06, _, _, _) => self.op_6xkk(opcode),
-            _ => unimplemented!(),
+            (0x07, _, _, _) => unimplemented!(),
+            (0x08, _, _, 0x00) => unimplemented!(),
+            (0x08, _, _, 0x01) => unimplemented!(),
+            (0x08, _, _, 0x02) => unimplemented!(),
+            (0x08, _, _, 0x03) => unimplemented!(),
+            (0x08, _, _, 0x04) => unimplemented!(),
+            (0x08, _, _, 0x05) => unimplemented!(),
+            (0x08, _, _, 0x06) => unimplemented!(),
+            (0x08, _, _, 0x07) => unimplemented!(),
+            (0x08, _, _, 0x0E) => unimplemented!(),
+            (0x09, _, _, 0x00) => unimplemented!(),
+            (0x0A, _, _, _) => unimplemented!(),
+            (0x0B, _, _, _) => unimplemented!(),
+            (0x0C, _, _, _) => unimplemented!(),
+            (0x0D, _, _, _) => unimplemented!(),
+            (0x0E, _, 0x09, 0x0E) => unimplemented!(),
+            (0x0E, _, 0x0A, 0x01) => unimplemented!(),
+            (0x0F, _, 0x00, 0x07) => unimplemented!(),
+            (0x0F, _, 0x00, 0x0A) => unimplemented!(),
+            (0x0F, _, 0x01, 0x05) => unimplemented!(),
+            (0x0F, _, 0x01, 0x08) => unimplemented!(),
+            (0x0F, _, 0x01, 0x0E) => unimplemented!(),
+            (0x0F, _, 0x01, 0x29) => unimplemented!(),
+            (0x0F, _, 0x01, 0x33) => unimplemented!(),
+            (0x0F, _, 0x01, 0x55) => unimplemented!(),
+            (0x0F, _, 0x01, 0x65) => unimplemented!(),
+            _ => unimplemented!("{:?}", opcode),
         }
     }
 
