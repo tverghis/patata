@@ -57,14 +57,14 @@ impl Chip8 {
         let opcode = self.next_opcode();
 
         match opcode.nibbles() {
-            (0x00, 0x00, 0x0E, 0x00) => self.clear_display(),
-            (0x00, 0x00, 0x0E, 0x0E) => self.ret_from_sub(),
-            (0x01, _, _, _) => self.jump_to_addr(opcode),
-            (0x02, _, _, _) => self.call_sub(opcode),
-            (0x03, _, _, _) => self.skip_if_eq(opcode),
-            (0x04, _, _, _) => self.skip_if_neq(opcode),
-            (0x05, _, _, 0x00) => self.skip_if_reg_eq(opcode),
-            (0x06, _, _, _) => self.load_byte(opcode),
+            (0x00, 0x00, 0x0E, 0x00) => self.op_00E0(),
+            (0x00, 0x00, 0x0E, 0x0E) => self.op_00EE(),
+            (0x01, _, _, _) => self.op_1nnn(opcode),
+            (0x02, _, _, _) => self.op_2nnn(opcode),
+            (0x03, _, _, _) => self.op_3xkk(opcode),
+            (0x04, _, _, _) => self.op_4xkk(opcode),
+            (0x05, _, _, 0x00) => self.op_5xy0(opcode),
+            (0x06, _, _, _) => self.op_6xkk(opcode),
             _ => unimplemented!(),
         }
     }
@@ -111,60 +111,62 @@ impl Chip8 {
         opcode
     }
 
-    /// 00E0: CLS
-    fn clear_display(&mut self) {
+    /// CLS
+    #[allow(non_snake_case)]
+    fn op_00E0(&mut self) {
         trace!("CLS");
         self.display.fill(0);
     }
 
-    /// 00EE: RET
-    fn ret_from_sub(&mut self) {
+    /// RET
+    #[allow(non_snake_case)]
+    fn op_00EE(&mut self) {
         // TODO: ensure SP and PC are valid values
         trace!("RET");
         self.stack_pointer -= 1;
         self.program_counter = self.stack[self.stack_pointer as usize];
     }
 
-    /// 1nnn: JP addr
-    fn jump_to_addr(&mut self, opcode: OpCode) {
+    /// JP addr
+    fn op_1nnn(&mut self, opcode: OpCode) {
         trace!("JP addr {:?}", opcode);
         self.program_counter = opcode.nnn();
     }
 
-    /// 2nnn: CALL addr
-    fn call_sub(&mut self, opcode: OpCode) {
+    /// CALL addr
+    fn op_2nnn(&mut self, opcode: OpCode) {
         trace!("CALL addr {:?}", opcode);
         self.stack[self.stack_pointer as usize] = self.program_counter;
         self.stack_pointer += 1;
         self.program_counter = opcode.nnn();
     }
 
-    /// 3xkk: SE Vx, byte
-    fn skip_if_eq(&mut self, opcode: OpCode) {
+    /// SE Vx, byte
+    fn op_3xkk(&mut self, opcode: OpCode) {
         trace!("SE Vx, byte {:?}", opcode);
         if self.registers[opcode.x() as usize] == opcode.kk() {
             self.program_counter += 2;
         }
     }
 
-    /// 4xkk: SNE Vx, byte
-    fn skip_if_neq(&mut self, opcode: OpCode) {
+    /// SNE Vx, byte
+    fn op_4xkk(&mut self, opcode: OpCode) {
         trace!("SNE Vx, byte {:?}", opcode);
         if self.registers[opcode.x() as usize] != opcode.kk() {
             self.program_counter += 2;
         }
     }
 
-    /// 5xy0: SE Vx, Vy
-    fn skip_if_reg_eq(&mut self, opcode: OpCode) {
+    /// SE Vx, Vy
+    fn op_5xy0(&mut self, opcode: OpCode) {
         trace!("SE Vx, Vy {:?}", opcode);
         if self.registers[opcode.x() as usize] == self.registers[opcode.y() as usize] {
             self.program_counter += 2;
         }
     }
 
-    /// 6xkk: LD Vx, byte
-    fn load_byte(&mut self, opcode: OpCode) {
+    /// LD Vx, byte
+    fn op_6xkk(&mut self, opcode: OpCode) {
         trace!("LD Vx, byte {:?}", opcode);
         self.registers[opcode.x() as usize] = opcode.kk();
     }
@@ -244,7 +246,7 @@ mod test {
         let mut c = Chip8::default();
         c.display.fill(99);
 
-        c.clear_display();
+        c.op_00E0();
 
         assert!(c.display.iter().all(|&i| i == 0));
     }
@@ -252,7 +254,7 @@ mod test {
     #[test]
     fn jp_addr() {
         let mut c = Chip8::default();
-        c.jump_to_addr(OpCode::from((0x0B, 0xED)));
+        c.op_1nnn(OpCode::from((0x0B, 0xED)));
 
         assert_eq!(0xBED, c.program_counter);
     }
@@ -261,7 +263,7 @@ mod test {
     fn call_addr() {
         let mut c = Chip8::default();
         c.program_counter = 0xFED;
-        c.call_sub(OpCode::from((0x0B, 0xED)));
+        c.op_2nnn(OpCode::from((0x0B, 0xED)));
 
         assert_eq!(0xFED, c.stack[0]);
         assert_eq!(1, c.stack_pointer);
@@ -275,10 +277,10 @@ mod test {
 
         c.registers[0] = 0xFF;
 
-        c.skip_if_eq(OpCode::from((0x00, 0xFF)));
+        c.op_3xkk(OpCode::from((0x00, 0xFF)));
         assert_eq!(old_pc + 2, c.program_counter);
 
-        c.skip_if_eq(OpCode::from((0x00, 0xAA)));
+        c.op_3xkk(OpCode::from((0x00, 0xAA)));
         assert_eq!(old_pc + 2, c.program_counter);
     }
 
@@ -289,10 +291,10 @@ mod test {
 
         c.registers[0] = 0xFF;
 
-        c.skip_if_neq(OpCode::from((0x00, 0xFF)));
+        c.op_4xkk(OpCode::from((0x00, 0xFF)));
         assert_eq!(old_pc, c.program_counter);
 
-        c.skip_if_neq(OpCode::from((0x00, 0xAA)));
+        c.op_4xkk(OpCode::from((0x00, 0xAA)));
         assert_eq!(old_pc + 2, c.program_counter);
     }
 }
