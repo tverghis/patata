@@ -48,6 +48,20 @@ impl Chip8 {
         self.load_rom_bytes(&file_bytes)
     }
 
+    pub fn tick(&mut self) {
+        let opcode = self.next_opcode();
+
+        match opcode.nibbles() {
+            (0x00, 0x00, 0x0E, 0x00) => self.clear_display(),
+            (0x00, 0x00, 0x0E, 0x0E) => self.ret_from_sub(),
+            (0x01, _, _, _) => self.jump_to_addr(opcode),
+            (0x02, _, _, _) => self.call_sub(opcode),
+            (0x03, _, _, _) => self.skip_if_eq(opcode),
+            (0x04, _, _, _) => self.skip_if_neq(opcode),
+            _ => unimplemented!(),
+        }
+    }
+
     fn load_rom_bytes(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
         let nbytes = bytes.len();
 
