@@ -63,6 +63,8 @@ impl Chip8 {
             (0x02, _, _, _) => self.call_sub(opcode),
             (0x03, _, _, _) => self.skip_if_eq(opcode),
             (0x04, _, _, _) => self.skip_if_neq(opcode),
+            (0x05, _, _, 0x00) => self.skip_if_reg_eq(opcode),
+            (0x06, _, _, _) => self.load_byte(opcode),
             _ => unimplemented!(),
         }
     }
@@ -151,6 +153,20 @@ impl Chip8 {
         if self.registers[opcode.x() as usize] != opcode.kk() {
             self.program_counter += 2;
         }
+    }
+
+    /// 5xy0: SE Vx, Vy
+    fn skip_if_reg_eq(&mut self, opcode: OpCode) {
+        trace!("SE Vx, Vy {:?}", opcode);
+        if self.registers[opcode.x() as usize] == self.registers[opcode.y() as usize] {
+            self.program_counter += 2;
+        }
+    }
+
+    /// 6xkk: LD Vx, byte
+    fn load_byte(&mut self, opcode: OpCode) {
+        trace!("LD Vx, byte {:?}", opcode);
+        self.registers[opcode.x() as usize] = opcode.kk();
     }
 }
 
