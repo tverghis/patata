@@ -1,3 +1,5 @@
+use log::{info, trace};
+
 use crate::{fonts::FONT_SET, opcode::OpCode};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
@@ -44,6 +46,9 @@ impl Default for Chip8 {
 impl Chip8 {
     pub fn load_rom_from_file(&mut self, file_name: &str) -> anyhow::Result<()> {
         // TODO: don't read the file into memory if it's too large
+
+        info!("loading rom from file {}", file_name);
+
         let file_bytes = std::fs::read(file_name)?;
         self.load_rom_bytes(&file_bytes)
     }
@@ -79,6 +84,8 @@ impl Chip8 {
 
         self.memory[src_copy_range].copy_from_slice(bytes);
 
+        info!("loaded {} bytes into memory", nbytes);
+
         Ok(())
     }
 
@@ -104,23 +111,27 @@ impl Chip8 {
 
     /// 00E0: CLS
     fn clear_display(&mut self) {
+        trace!("CLS");
         self.display.fill(0);
     }
 
     /// 00EE: RET
     fn ret_from_sub(&mut self) {
         // TODO: ensure SP and PC are valid values
+        trace!("RET");
         self.stack_pointer -= 1;
         self.program_counter = self.stack[self.stack_pointer as usize];
     }
 
     /// 1nnn: JP addr
     fn jump_to_addr(&mut self, opcode: OpCode) {
+        trace!("JP addr {:?}", opcode);
         self.program_counter = opcode.nnn();
     }
 
     /// 2nnn: CALL addr
     fn call_sub(&mut self, opcode: OpCode) {
+        trace!("CALL addr {:?}", opcode);
         self.stack[self.stack_pointer as usize] = self.program_counter;
         self.stack_pointer += 1;
         self.program_counter = opcode.nnn();
@@ -128,6 +139,7 @@ impl Chip8 {
 
     /// 3xkk: SE Vx, byte
     fn skip_if_eq(&mut self, opcode: OpCode) {
+        trace!("SE Vx, byte {:?}", opcode);
         if self.registers[opcode.x() as usize] == opcode.kk() {
             self.program_counter += 2;
         }
@@ -135,6 +147,7 @@ impl Chip8 {
 
     /// 4xkk: SNE Vx, byte
     fn skip_if_neq(&mut self, opcode: OpCode) {
+        trace!("SNE Vx, byte {:?}", opcode);
         if self.registers[opcode.x() as usize] != opcode.kk() {
             self.program_counter += 2;
         }
