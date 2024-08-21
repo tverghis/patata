@@ -1,4 +1,4 @@
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub struct OpCode {
     inner: u16,
 }
@@ -39,6 +39,12 @@ impl From<(u8, u8)> for OpCode {
         Self {
             inner: (u16::from(next_bytes.0) << 8) | u16::from(next_bytes.1),
         }
+    }
+}
+
+impl std::fmt::Debug for OpCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#2X}", self.inner)
     }
 }
 
