@@ -297,4 +297,29 @@ mod test {
         c.op_4xkk(OpCode::from((0x00, 0xAA)));
         assert_eq!(old_pc + 2, c.program_counter);
     }
+
+    #[test]
+    fn skip_if_reg_eq() {
+        let mut c = Chip8::default();
+        let old_pc = c.program_counter;
+
+        c.registers[0] = 0xFF;
+        c.registers[1] = 0xFF;
+        c.registers[2] = 0xEE;
+
+        c.op_5xy0(OpCode::from((0x00, 0x10)));
+        assert_eq!(old_pc + 2, c.program_counter);
+
+        c.op_5xy0(OpCode::from((0x00, 0x20)));
+        assert_eq!(old_pc + 2, c.program_counter);
+    }
+
+    #[test]
+    fn load_byte() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x6F, 0xFF));
+
+        c.op_6xkk(opcode);
+        assert_eq!(0xFF, c.registers[0x0F]);
+    }
 }
