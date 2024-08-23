@@ -67,10 +67,10 @@ impl Chip8 {
             (0x05, _, _, 0x00) => self.op_5xy0(opcode),
             (0x06, _, _, _) => self.op_6xkk(opcode),
             (0x07, _, _, _) => self.op_7xkk(opcode),
-            (0x08, _, _, 0x00) => unimplemented!(),
-            (0x08, _, _, 0x01) => unimplemented!(),
-            (0x08, _, _, 0x02) => unimplemented!(),
-            (0x08, _, _, 0x03) => unimplemented!(),
+            (0x08, _, _, 0x00) => self.op_8xy0(opcode),
+            (0x08, _, _, 0x01) => self.op_8xy1(opcode),
+            (0x08, _, _, 0x02) => self.op_8xy2(opcode),
+            (0x08, _, _, 0x03) => self.op_8xy3(opcode),
             (0x08, _, _, 0x04) => unimplemented!(),
             (0x08, _, _, 0x05) => unimplemented!(),
             (0x08, _, _, 0x06) => unimplemented!(),
@@ -202,6 +202,30 @@ impl Chip8 {
     fn op_7xkk(&mut self, opcode: OpCode) {
         trace!("ADD Vx, byte {:?}", opcode);
         self.registers[opcode.x() as usize] += opcode.kk();
+    }
+
+    /// LD Vx, Vy
+    fn op_8xy0(&mut self, opcode: OpCode) {
+        trace!("LD Vx, Vy {:?}", opcode);
+        self.registers[opcode.x() as usize] = self.registers[opcode.y() as usize];
+    }
+
+    /// OR Vx, Vy
+    fn op_8xy1(&mut self, opcode: OpCode) {
+        trace!("OR Vx, Vy {:?}", opcode);
+        self.registers[opcode.x() as usize] |= self.registers[opcode.y() as usize];
+    }
+
+    /// AND Vx, Vy
+    fn op_8xy2(&mut self, opcode: OpCode) {
+        trace!("AND Vx, Vy {:?}", opcode);
+        self.registers[opcode.x() as usize] &= self.registers[opcode.y() as usize];
+    }
+
+    /// XOR Vx, Vy
+    fn op_8xy3(&mut self, opcode: OpCode) {
+        trace!("XOR Vx, Vy {:?}", opcode);
+        self.registers[opcode.x() as usize] ^= self.registers[opcode.y() as usize];
     }
 }
 
@@ -365,5 +389,52 @@ mod test {
 
         c.op_7xkk(opcode);
         assert_eq!(0x02, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn load_reg() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x01] = 0xFF;
+
+        c.op_8xy0(opcode);
+        assert_eq!(c.registers[0x01], c.registers[0x00]);
+    }
+
+    #[test]
+    fn or_reg() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0xBE;
+        c.registers[0x01] = 0x22;
+
+        c.op_8xy1(opcode);
+        assert_eq!(0xBE | 0x22, c.registers[0x00]);
+    }
+
+    #[test]
+    fn and_reg() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0xBE;
+        c.registers[0x01] = 0x22;
+
+        c.op_8xy2(opcode);
+        assert_eq!(0xBE & 0x22, c.registers[0x00]);
+    }
+
+    #[test]
+    fn xor_reg() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0xBE;
+        c.registers[0x01] = 0x22;
+
+        c.op_8xy3(opcode);
+        assert_eq!(0xBE ^ 0x22, c.registers[0x00]);
     }
 }
