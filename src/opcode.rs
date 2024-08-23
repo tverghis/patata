@@ -6,10 +6,10 @@ pub struct OpCode {
 impl OpCode {
     pub fn nibbles(self) -> (u8, u8, u8, u8) {
         (
-            ((self.inner & 0xF000) >> 12) as u8,
-            ((self.inner & 0x0F00) >> 8) as u8,
-            ((self.inner & 0x00F0) >> 4) as u8,
-            (self.inner & 0x000F) as u8,
+            ((self.inner & 0b1111_0000_0000_0000) >> 12) as u8,
+            ((self.inner & 0b0000_1111_0000_0000) >> 8) as u8,
+            ((self.inner & 0b0000_0000_1111_0000) >> 4) as u8,
+            (self.inner & 0b0000_0000_0000_1111) as u8,
         )
     }
 
