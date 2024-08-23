@@ -94,7 +94,7 @@ impl Chip8 {
             (0x0F, _, 0x01, 0x33) => unimplemented!(),
             (0x0F, _, 0x01, 0x55) => unimplemented!(),
             (0x0F, _, 0x01, 0x65) => unimplemented!(),
-            _ => unimplemented!("{:?}", opcode),
+            _ => unreachable!("{:?}", opcode),
         }
     }
 
