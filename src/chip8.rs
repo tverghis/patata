@@ -1,3 +1,5 @@
+#![allow(clippy::cast_lossless)]
+
 use log::{info, trace};
 
 use crate::{fonts::FONT_SET, opcode::OpCode};
@@ -71,7 +73,7 @@ impl Chip8 {
             (0x08, _, _, 0x01) => self.op_8xy1(opcode),
             (0x08, _, _, 0x02) => self.op_8xy2(opcode),
             (0x08, _, _, 0x03) => self.op_8xy3(opcode),
-            (0x08, _, _, 0x04) => unimplemented!(),
+            (0x08, _, _, 0x04) => self.op_8xy4(opcode),
             (0x08, _, _, 0x05) => unimplemented!(),
             (0x08, _, _, 0x06) => unimplemented!(),
             (0x08, _, _, 0x07) => unimplemented!(),
@@ -226,6 +228,20 @@ impl Chip8 {
     fn op_8xy3(&mut self, opcode: OpCode) {
         trace!("XOR Vx, Vy {:?}", opcode);
         self.registers[opcode.x() as usize] ^= self.registers[opcode.y() as usize];
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    /// ADD Vx, Vy
+    fn op_8xy4(&mut self, opcode: OpCode) {
+        trace!("ADD Vx, Vy {:?}", opcode);
+        let sum =
+            self.registers[opcode.x() as usize] as u16 + self.registers[opcode.y() as usize] as u16;
+
+        // If there was overflow, the 9th bit must be set to 1.
+        self.registers[0x0F] = ((sum >> 8) > 0) as u8;
+
+        // We want to keep the first 8 LSBs, which is exactly what casting to a u8 does
+        self.registers[opcode.x() as usize] = sum as u8;
     }
 }
 
@@ -436,5 +452,44 @@ mod test {
 
         c.op_8xy3(opcode);
         assert_eq!(0xBE ^ 0x22, c.registers[0x00]);
+    }
+
+    #[test]
+    fn add_reg_no_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0xFE;
+        c.registers[0x01] = 0x01;
+
+        c.op_8xy4(opcode);
+        assert_eq!(0xFF, c.registers[0x00]);
+        assert_eq!(0, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn add_reg_minimal_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0b1111_1111;
+        c.registers[0x01] = 0b0000_0001;
+
+        c.op_8xy4(opcode);
+        assert_eq!(0x00, c.registers[0x00]);
+        assert_eq!(1, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn add_reg_max_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x10));
+
+        c.registers[0x00] = 0xFF;
+        c.registers[0x01] = 0xFF;
+
+        c.op_8xy4(opcode);
+        assert_eq!(254, c.registers[0x00]);
+        assert_eq!(1, c.registers[0x0F]);
     }
 }
