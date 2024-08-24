@@ -77,7 +77,7 @@ impl Chip8 {
             (0x08, _, _, 0x05) => self.op_8xy5(opcode),
             (0x08, _, _, 0x06) => self.op_8xy6(opcode),
             (0x08, _, _, 0x07) => self.op_8xy7(opcode),
-            (0x08, _, _, 0x0E) => unimplemented!(),
+            (0x08, _, _, 0x0E) => self.op_8xyE(opcode),
             (0x09, _, _, 0x00) => unimplemented!(),
             (0x0A, _, _, _) => unimplemented!(),
             (0x0B, _, _, _) => unimplemented!(),
@@ -263,7 +263,7 @@ impl Chip8 {
         self.registers[opcode.x() as usize] = vx >> 1;
     }
 
-    /// SHR Vx
+    /// SUBN Vx, Vy
     fn op_8xy7(&mut self, opcode: OpCode) {
         trace!("SUBN Vx, Vy {:?}", opcode);
         let vx = self.registers[opcode.x() as usize];
@@ -273,6 +273,15 @@ impl Chip8 {
 
         self.registers[0x0F] = !has_overflow as u8;
         self.registers[opcode.x() as usize] = res;
+    }
+
+    /// SHL Vx
+    #[allow(non_snake_case)]
+    fn op_8xyE(&mut self, opcode: OpCode) {
+        trace!("SHL Vx {:?}", opcode);
+        let vx = self.registers[opcode.x() as usize];
+        self.registers[0x0F] = (vx >> 7) & 0b0000_0001;
+        self.registers[opcode.x() as usize] = vx << 1;
     }
 }
 
@@ -577,7 +586,7 @@ mod test {
     #[test]
     fn subn_reg_no_overflow() {
         let mut c = Chip8::default();
-        let opcode = OpCode::from((0x80, 0x15));
+        let opcode = OpCode::from((0x80, 0x17));
 
         c.registers[0x00] = 5;
         c.registers[0x01] = 10;
@@ -590,7 +599,7 @@ mod test {
     #[test]
     fn subn_reg_with_overflow() {
         let mut c = Chip8::default();
-        let opcode = OpCode::from((0x80, 0x15));
+        let opcode = OpCode::from((0x80, 0x17));
 
         c.registers[0x00] = 10;
         c.registers[0x01] = 5;
@@ -598,5 +607,29 @@ mod test {
         c.op_8xy7(opcode);
         assert_eq!(251, c.registers[0x00]);
         assert_eq!(0, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn shift_left_no_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x1E));
+
+        c.registers[0x00] = 0b0000_0110;
+
+        c.op_8xyE(opcode);
+        assert_eq!(0b0000_1100, c.registers[0x00]);
+        assert_eq!(0, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn shift_left_with_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x1E));
+
+        c.registers[0x00] = 0b1100_0110;
+
+        c.op_8xyE(opcode);
+        assert_eq!(0b1000_1100, c.registers[0x00]);
+        assert_eq!(1, c.registers[0x0F]);
     }
 }
