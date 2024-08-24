@@ -234,14 +234,13 @@ impl Chip8 {
     /// ADD Vx, Vy
     fn op_8xy4(&mut self, opcode: OpCode) {
         trace!("ADD Vx, Vy {:?}", opcode);
-        let sum =
-            self.registers[opcode.x() as usize] as u16 + self.registers[opcode.y() as usize] as u16;
+        let vx = self.registers[opcode.x() as usize];
+        let vy = self.registers[opcode.y() as usize];
 
-        // If there was overflow, the 9th bit must be set to 1.
-        self.registers[0x0F] = ((sum >> 8) > 0) as u8;
+        let (res, has_overflow) = vx.overflowing_add(vy);
 
-        // We want to keep the first 8 LSBs, which is exactly what casting to a u8 does
-        self.registers[opcode.x() as usize] = sum as u8;
+        self.registers[0x0F] = has_overflow as u8;
+        self.registers[opcode.x() as usize] = res;
     }
 
     /// SUB Vx, Vy
@@ -469,7 +468,7 @@ mod test {
     #[test]
     fn add_reg_no_overflow() {
         let mut c = Chip8::default();
-        let opcode = OpCode::from((0x80, 0x10));
+        let opcode = OpCode::from((0x80, 0x14));
 
         c.registers[0x00] = 0xFE;
         c.registers[0x01] = 0x01;
@@ -482,7 +481,7 @@ mod test {
     #[test]
     fn add_reg_minimal_overflow() {
         let mut c = Chip8::default();
-        let opcode = OpCode::from((0x80, 0x10));
+        let opcode = OpCode::from((0x80, 0x14));
 
         c.registers[0x00] = 0b1111_1111;
         c.registers[0x01] = 0b0000_0001;
@@ -495,7 +494,7 @@ mod test {
     #[test]
     fn add_reg_max_overflow() {
         let mut c = Chip8::default();
-        let opcode = OpCode::from((0x80, 0x10));
+        let opcode = OpCode::from((0x80, 0x14));
 
         c.registers[0x00] = 0xFF;
         c.registers[0x01] = 0xFF;
