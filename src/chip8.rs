@@ -96,6 +96,9 @@ impl Chip8 {
             (0x0F, _, 0x01, 0x65) => unimplemented!(),
             _ => unreachable!("{:?}", opcode),
         }
+
+        self.delay_timer = self.delay_timer.saturating_sub(1);
+        self.sound_timer = self.sound_timer.saturating_sub(1);
     }
 
     fn load_rom_bytes(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
