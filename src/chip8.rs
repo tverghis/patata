@@ -74,7 +74,7 @@ impl Chip8 {
             (0x08, _, _, 0x02) => self.op_8xy2(opcode),
             (0x08, _, _, 0x03) => self.op_8xy3(opcode),
             (0x08, _, _, 0x04) => self.op_8xy4(opcode),
-            (0x08, _, _, 0x05) => unimplemented!(),
+            (0x08, _, _, 0x05) => self.op_8xy5(opcode),
             (0x08, _, _, 0x06) => unimplemented!(),
             (0x08, _, _, 0x07) => unimplemented!(),
             (0x08, _, _, 0x0E) => unimplemented!(),
@@ -242,6 +242,18 @@ impl Chip8 {
 
         // We want to keep the first 8 LSBs, which is exactly what casting to a u8 does
         self.registers[opcode.x() as usize] = sum as u8;
+    }
+
+    /// SUB Vx, Vy
+    fn op_8xy5(&mut self, opcode: OpCode) {
+        trace!("SUB Vx, Vy {:?}", opcode);
+        let vx = self.registers[opcode.x() as usize];
+        let vy = self.registers[opcode.y() as usize];
+
+        let (res, has_overflow) = vx.overflowing_sub(vy);
+
+        self.registers[0x0F] = !has_overflow as u8;
+        self.registers[opcode.x() as usize] = res;
     }
 }
 
@@ -491,5 +503,31 @@ mod test {
         c.op_8xy4(opcode);
         assert_eq!(254, c.registers[0x00]);
         assert_eq!(1, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn sub_reg_no_overflow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x15));
+
+        c.registers[0x00] = 10;
+        c.registers[0x01] = 5;
+
+        c.op_8xy5(opcode);
+        assert_eq!(5, c.registers[0x00]);
+        assert_eq!(1, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn sub_reg_with_borrow() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x80, 0x15));
+
+        c.registers[0x00] = 5;
+        c.registers[0x01] = 10;
+
+        c.op_8xy5(opcode);
+        assert_eq!(251, c.registers[0x00]);
+        assert_eq!(0, c.registers[0x0F]);
     }
 }
