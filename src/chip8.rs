@@ -78,7 +78,7 @@ impl Chip8 {
             (0x08, _, _, 0x06) => self.op_8xy6(opcode),
             (0x08, _, _, 0x07) => self.op_8xy7(opcode),
             (0x08, _, _, 0x0E) => self.op_8xyE(opcode),
-            (0x09, _, _, 0x00) => unimplemented!(),
+            (0x09, _, _, 0x00) => self.op_9xy0(opcode),
             (0x0A, _, _, _) => unimplemented!(),
             (0x0B, _, _, _) => unimplemented!(),
             (0x0C, _, _, _) => unimplemented!(),
@@ -282,6 +282,15 @@ impl Chip8 {
         let vx = self.registers[opcode.x() as usize];
         self.registers[0x0F] = (vx >> 7) & 0b0000_0001;
         self.registers[opcode.x() as usize] = vx << 1;
+    }
+
+    /// SNE Vx,Vy
+    fn op_9xy0(&mut self, opcode: OpCode) {
+        trace!("SNE Vx, Vy {:?}", opcode);
+
+        if self.registers[opcode.x() as usize] != self.registers[opcode.y() as usize] {
+            self.program_counter += 2;
+        }
     }
 }
 
@@ -631,5 +640,22 @@ mod test {
         c.op_8xyE(opcode);
         assert_eq!(0b1000_1100, c.registers[0x00]);
         assert_eq!(1, c.registers[0x0F]);
+    }
+
+    #[test]
+    fn skip_ne_reg() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0x90, 0x10));
+
+        let old_pc = c.program_counter;
+
+        c.registers[0x00] = 10;
+        c.registers[0x01] = 10;
+        c.op_9xy0(opcode);
+        assert_eq!(old_pc, c.program_counter);
+
+        c.registers[0x01] = 11;
+        c.op_9xy0(opcode);
+        assert_eq!(old_pc + 2, c.program_counter);
     }
 }
