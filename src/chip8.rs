@@ -2,7 +2,7 @@
 
 use log::{info, trace};
 
-use crate::{fonts::FONT_SET, opcode::OpCode};
+use crate::{fonts::FONT_SET, index::IndexRegister, opcode::OpCode};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
@@ -12,8 +12,7 @@ const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
 pub struct Chip8 {
     registers: [u8; 16],
     memory: [u8; MEMORY_SIZE_BYTES],
-    // `index` needs to hold the maximum possible address in `memory`
-    index: u16,
+    index: IndexRegister,
     // `program_counter` needs to hold the maximum possible address in `memory`
     program_counter: u16,
     stack: [u16; 16],
@@ -33,7 +32,7 @@ impl Default for Chip8 {
         Self {
             registers: [0; 16],
             memory,
-            index: 0,
+            index: IndexRegister::default(),
             program_counter: PROG_CTR_START_ADDR,
             stack: [0; 16],
             stack_pointer: 0,
@@ -79,7 +78,7 @@ impl Chip8 {
             (0x08, _, _, 0x07) => self.op_8xy7(opcode),
             (0x08, _, _, 0x0E) => self.op_8xyE(opcode),
             (0x09, _, _, 0x00) => self.op_9xy0(opcode),
-            (0x0A, _, _, _) => unimplemented!(),
+            (0x0A, _, _, _) => self.op_Annn(opcode),
             (0x0B, _, _, _) => unimplemented!(),
             (0x0C, _, _, _) => unimplemented!(),
             (0x0D, _, _, _) => unimplemented!(),
@@ -294,6 +293,12 @@ impl Chip8 {
         if self.registers[opcode.x() as usize] != self.registers[opcode.y() as usize] {
             self.program_counter += 2;
         }
+    }
+
+    /// LD I, addr
+    fn op_Annn(&mut self, opcode: OpCode) {
+        trace!("LD I, Annn {:?}", opcode);
+        self.index.load(opcode.nnn());
     }
 }
 
@@ -660,5 +665,18 @@ mod test {
         c.registers[0x01] = 11;
         c.op_9xy0(opcode);
         assert_eq!(old_pc + 2, c.program_counter);
+    }
+
+    #[test]
+    fn load_index() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xA1, 0x11));
+
+        c.op_Annn(opcode);
+
+        let mut expected_index = IndexRegister::default();
+        expected_index.load(0x111);
+
+        assert_eq!(expected_index, c.index);
     }
 }
