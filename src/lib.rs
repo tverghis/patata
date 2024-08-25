@@ -1,5 +1,5 @@
 mod fonts;
-mod index;
 mod opcode;
+mod reg;
 
 pub mod chip8;

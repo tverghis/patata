@@ -2,7 +2,7 @@
 
 use log::{info, trace};
 
-use crate::{fonts::FONT_SET, index::IndexRegister, opcode::OpCode};
+use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
@@ -296,6 +296,7 @@ impl Chip8 {
     }
 
     /// LD I, addr
+    #[allow(non_snake_case)]
     fn op_Annn(&mut self, opcode: OpCode) {
         trace!("LD I, Annn {:?}", opcode);
         self.index.load(opcode.nnn());
