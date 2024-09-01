@@ -79,7 +79,7 @@ impl Chip8 {
             (0x08, _, _, 0x0E) => self.op_8xyE(opcode),
             (0x09, _, _, 0x00) => self.op_9xy0(opcode),
             (0x0A, _, _, _) => self.op_Annn(opcode),
-            (0x0B, _, _, _) => unimplemented!(),
+            (0x0B, _, _, _) => self.op_Bnnn(opcode),
             (0x0C, _, _, _) => unimplemented!(),
             (0x0D, _, _, _) => unimplemented!(),
             (0x0E, _, 0x09, 0x0E) => unimplemented!(),
@@ -300,6 +300,14 @@ impl Chip8 {
     fn op_Annn(&mut self, opcode: OpCode) {
         trace!("LD I, Annn {:?}", opcode);
         self.index.load(opcode.nnn());
+    }
+
+    /// JP V0, addr
+    #[allow(non_snake_case)]
+    #[allow(clippy::cast_possible_truncation)]
+    fn op_Bnnn(&mut self, opcode: OpCode) {
+        trace!("JP V0, addr {:?}", opcode);
+        self.program_counter = (self.registers[0] + (opcode.nnn() as u8)) as u16;
     }
 }
 
@@ -679,5 +687,16 @@ mod test {
         expected_index.load(0x111);
 
         assert_eq!(expected_index, c.index);
+    }
+
+    #[test]
+    fn jump_v0_plus_addr() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xB1, 0x11));
+
+        c.registers[0] = 1;
+        c.op_Bnnn(opcode);
+
+        assert_eq!(0x11 + 1, c.program_counter);
     }
 }
