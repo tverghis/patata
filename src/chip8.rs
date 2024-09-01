@@ -3,7 +3,7 @@
 use log::{info, trace};
 use rand::{rngs::ThreadRng, Rng};
 
-use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister};
+use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister, timer::Timer};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
@@ -18,8 +18,8 @@ pub struct Chip8 {
     program_counter: u16,
     stack: [u16; 16],
     stack_pointer: u8,
-    delay_timer: u8,
-    sound_timer: u8,
+    delay_timer: Timer,
+    sound_timer: Timer,
     keypad: [u8; 16],
     display: [u8; 64 * 32],
     rng: ThreadRng,
@@ -38,8 +38,8 @@ impl Default for Chip8 {
             program_counter: PROG_CTR_START_ADDR,
             stack: [0; 16],
             stack_pointer: 0,
-            delay_timer: 0,
-            sound_timer: 0,
+            delay_timer: Timer::default(),
+            sound_timer: Timer::default(),
             keypad: [0; 16],
             display: [0; 64 * 32],
             rng: ThreadRng::default(),
@@ -102,8 +102,8 @@ impl Chip8 {
             _ => unreachable!("{:?}", opcode),
         }
 
-        self.delay_timer = self.delay_timer.saturating_sub(1);
-        self.sound_timer = self.sound_timer.saturating_sub(1);
+        self.delay_timer.tick();
+        self.sound_timer.tick();
     }
 
     fn load_rom_bytes(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
