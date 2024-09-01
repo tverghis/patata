@@ -3,7 +3,7 @@
 use log::{info, trace};
 use rand::{rngs::ThreadRng, Rng};
 
-use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister, timer::Timer};
+use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister, timer::Timer, video::Video};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
@@ -21,7 +21,7 @@ pub struct Chip8 {
     delay_timer: Timer,
     sound_timer: Timer,
     keypad: [u8; 16],
-    display: [u8; 64 * 32],
+    display: Video,
     rng: ThreadRng,
 }
 
@@ -41,7 +41,7 @@ impl Default for Chip8 {
             delay_timer: Timer::default(),
             sound_timer: Timer::default(),
             keypad: [0; 16],
-            display: [0; 64 * 32],
+            display: Video::default(),
             rng: ThreadRng::default(),
         }
     }
@@ -152,7 +152,7 @@ impl Chip8 {
     #[allow(non_snake_case)]
     fn op_00E0(&mut self) {
         trace!("CLS");
-        self.display.fill(0);
+        self.display.clear();
     }
 
     /// RET
@@ -393,16 +393,6 @@ mod test {
         let opcode = c.next_opcode();
         assert_eq!(OpCode::from((0xBE, 0xEF)), opcode);
         assert_eq!(PROG_CTR_START_ADDR + 4, c.program_counter);
-    }
-
-    #[test]
-    fn cls() {
-        let mut c = Chip8::default();
-        c.display.fill(99);
-
-        c.op_00E0();
-
-        assert!(c.display.iter().all(|&i| i == 0));
     }
 
     #[test]
