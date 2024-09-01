@@ -1,6 +1,7 @@
 #![allow(clippy::cast_lossless)]
 
 use log::{info, trace};
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister};
 
@@ -21,6 +22,7 @@ pub struct Chip8 {
     sound_timer: u8,
     keypad: [u8; 16],
     display: [u8; 64 * 32],
+    rng: ThreadRng,
 }
 
 impl Default for Chip8 {
@@ -40,6 +42,7 @@ impl Default for Chip8 {
             sound_timer: 0,
             keypad: [0; 16],
             display: [0; 64 * 32],
+            rng: ThreadRng::default(),
         }
     }
 }
@@ -80,7 +83,10 @@ impl Chip8 {
             (0x09, _, _, 0x00) => self.op_9xy0(opcode),
             (0x0A, _, _, _) => self.op_Annn(opcode),
             (0x0B, _, _, _) => self.op_Bnnn(opcode),
-            (0x0C, _, _, _) => unimplemented!(),
+            (0x0C, _, _, _) => {
+                let byte = self.rng.gen();
+                self.op_Cxkk(opcode, byte);
+            }
             (0x0D, _, _, _) => unimplemented!(),
             (0x0E, _, 0x09, 0x0E) => unimplemented!(),
             (0x0E, _, 0x0A, 0x01) => unimplemented!(),
@@ -308,6 +314,15 @@ impl Chip8 {
     fn op_Bnnn(&mut self, opcode: OpCode) {
         trace!("JP V0, addr {:?}", opcode);
         self.program_counter = (self.registers[0] + (opcode.nnn() as u8)) as u16;
+    }
+
+    /// RND Vx, byte
+    #[allow(non_snake_case)]
+    fn op_Cxkk(&mut self, opcode: OpCode, rand_byte: u8) {
+        trace!("RND Vx, byte {:?}", opcode);
+        let x = opcode.x() as usize;
+
+        self.registers[x] = rand_byte & opcode.kk();
     }
 }
 
@@ -698,5 +713,17 @@ mod test {
         c.op_Bnnn(opcode);
 
         assert_eq!(0x11 + 1, c.program_counter);
+    }
+
+    #[test]
+    fn random_byte_and_kk() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xC0, 0x01));
+
+        let rand_byte = 0x11;
+
+        c.op_Cxkk(opcode, rand_byte);
+
+        assert_eq!(rand_byte & 0x01, c.registers[0]);
     }
 }
