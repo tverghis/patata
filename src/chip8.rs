@@ -99,7 +99,7 @@ impl Chip8 {
             (0x0D, _, _, _) => self.op_Dxyn(opcode),
             (0x0E, _, 0x09, 0x0E) => self.op_Ex9E(opcode),
             (0x0E, _, 0x0A, 0x01) => self.op_ExA1(opcode),
-            (0x0F, _, 0x00, 0x07) => unimplemented!(),
+            (0x0F, _, 0x00, 0x07) => self.op_Fx07(opcode),
             (0x0F, _, 0x00, 0x0A) => unimplemented!(),
             (0x0F, _, 0x01, 0x05) => unimplemented!(),
             (0x0F, _, 0x01, 0x08) => unimplemented!(),
@@ -371,6 +371,14 @@ impl Chip8 {
         if !self.keypad.is_key_pressed(key) {
             self.program_counter += 2;
         }
+    }
+
+    /// LD Vx, DT
+    #[allow(non_snake_case)]
+    fn op_Fx07(&mut self, opcode: OpCode) {
+        trace!("LD Vx, DT");
+        let x = opcode.x() as usize;
+        self.registers[x] = self.delay_timer.cur_count();
     }
 }
 

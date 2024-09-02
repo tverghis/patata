@@ -7,6 +7,10 @@ impl Timer {
     pub fn tick(&mut self) {
         self.count = self.count.saturating_sub(1);
     }
+
+    pub fn cur_count(self) -> u8 {
+        self.count
+    }
 }
 
 #[cfg(test)]
