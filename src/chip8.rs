@@ -98,7 +98,7 @@ impl Chip8 {
             }
             (0x0D, _, _, _) => self.op_Dxyn(opcode),
             (0x0E, _, 0x09, 0x0E) => self.op_Ex9E(opcode),
-            (0x0E, _, 0x0A, 0x01) => unimplemented!(),
+            (0x0E, _, 0x0A, 0x01) => self.op_ExA1(opcode),
             (0x0F, _, 0x00, 0x07) => unimplemented!(),
             (0x0F, _, 0x00, 0x0A) => unimplemented!(),
             (0x0F, _, 0x01, 0x05) => unimplemented!(),
@@ -357,6 +357,18 @@ impl Chip8 {
         let key = self.registers[x] as usize;
 
         if self.keypad.is_key_pressed(key) {
+            self.program_counter += 2;
+        }
+    }
+
+    /// SKNP Vx
+    #[allow(non_snake_case)]
+    fn op_ExA1(&mut self, opcode: OpCode) {
+        trace!("SKNP Vx {:?}", opcode);
+        let x = opcode.x() as usize;
+        let key = self.registers[x] as usize;
+
+        if !self.keypad.is_key_pressed(key) {
             self.program_counter += 2;
         }
     }
