@@ -7,6 +7,7 @@ use crate::{
     fonts::FONT_SET,
     opcode::OpCode,
     subsystem::{
+        keypad::Keypad,
         reg::IndexRegister,
         timer::Timer,
         video::{DrawCoords, Video},
@@ -28,7 +29,7 @@ pub struct Chip8 {
     stack_pointer: u8,
     delay_timer: Timer,
     sound_timer: Timer,
-    keypad: [u8; 16],
+    keypad: Keypad,
     display: Video,
     rng: ThreadRng,
 }
@@ -48,7 +49,7 @@ impl Default for Chip8 {
             stack_pointer: 0,
             delay_timer: Timer::default(),
             sound_timer: Timer::default(),
-            keypad: [0; 16],
+            keypad: Keypad::default(),
             display: Video::default(),
             rng: ThreadRng::default(),
         }
@@ -96,7 +97,7 @@ impl Chip8 {
                 self.op_Cxkk(opcode, byte);
             }
             (0x0D, _, _, _) => self.op_Dxyn(opcode),
-            (0x0E, _, 0x09, 0x0E) => unimplemented!(),
+            (0x0E, _, 0x09, 0x0E) => self.op_Ex9E(opcode),
             (0x0E, _, 0x0A, 0x01) => unimplemented!(),
             (0x0F, _, 0x00, 0x07) => unimplemented!(),
             (0x0F, _, 0x00, 0x0A) => unimplemented!(),
@@ -346,6 +347,18 @@ impl Chip8 {
             &self.memory[self.index.get()..(self.index.get() + height)],
             &coords,
         );
+    }
+
+    /// SKP Vx
+    #[allow(non_snake_case)]
+    fn op_Ex9E(&mut self, opcode: OpCode) {
+        trace!("SKP Vx {:?}", opcode);
+        let x = opcode.x() as usize;
+        let key = self.registers[x] as usize;
+
+        if self.keypad.is_key_pressed(key) {
+            self.program_counter += 2;
+        }
     }
 }
 
