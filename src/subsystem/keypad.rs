@@ -1,4 +1,4 @@
-const NUM_KEYS: usize = 16;
+const NUM_KEYS: u8 = 16;
 
 #[derive(Debug, Default, Clone)]
 pub struct Keypad {
@@ -6,7 +6,7 @@ pub struct Keypad {
 }
 
 impl Keypad {
-    pub fn is_key_pressed(&self, key: usize) -> bool {
+    pub fn is_key_pressed(&self, key: u8) -> bool {
         assert!(key < NUM_KEYS);
 
         self.keys & (1 << key) != 0
@@ -15,7 +15,7 @@ impl Keypad {
     pub fn pressed_key(&self) -> Option<u8> {
         for i in 0..16 {
             if self.is_key_pressed(i) {
-                return Some(i as u8);
+                return Some(i);
             }
         }
 

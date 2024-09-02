@@ -354,7 +354,7 @@ impl Chip8 {
     fn op_Ex9E(&mut self, opcode: OpCode) {
         trace!("SKP Vx {:?}", opcode);
         let x = opcode.x() as usize;
-        let key = self.registers[x] as usize;
+        let key = self.registers[x];
 
         if self.keypad.is_key_pressed(key) {
             self.program_counter += 2;
@@ -366,7 +366,7 @@ impl Chip8 {
     fn op_ExA1(&mut self, opcode: OpCode) {
         trace!("SKNP Vx {:?}", opcode);
         let x = opcode.x() as usize;
-        let key = self.registers[x] as usize;
+        let key = self.registers[x];
 
         if !self.keypad.is_key_pressed(key) {
             self.program_counter += 2;
