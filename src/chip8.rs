@@ -17,6 +17,7 @@ use crate::{
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
 const MAX_ROM_SIZE_BYTES: usize = MEMORY_SIZE_BYTES - 0x200;
+const FONTSET_START_ADDR: usize = 0x50;
 
 #[derive(Debug, Clone)]
 pub struct Chip8 {
@@ -38,7 +39,8 @@ impl Default for Chip8 {
     fn default() -> Self {
         let mut memory = [0; 4096];
 
-        memory[0x50..(0x50 + FONT_SET.len())].copy_from_slice(&FONT_SET);
+        memory[FONTSET_START_ADDR..(FONTSET_START_ADDR + FONT_SET.len())]
+            .copy_from_slice(&FONT_SET);
 
         Self {
             registers: [0; 16],
@@ -104,7 +106,7 @@ impl Chip8 {
             (0x0F, _, 0x01, 0x05) => self.op_Fx15(opcode),
             (0x0F, _, 0x01, 0x08) => self.op_Fx18(opcode),
             (0x0F, _, 0x01, 0x0E) => self.op_Fx1E(opcode),
-            (0x0F, _, 0x01, 0x29) => unimplemented!(),
+            (0x0F, _, 0x02, 0x09) => self.op_Fx29(opcode),
             (0x0F, _, 0x01, 0x33) => unimplemented!(),
             (0x0F, _, 0x01, 0x55) => unimplemented!(),
             (0x0F, _, 0x01, 0x65) => unimplemented!(),
@@ -417,6 +419,15 @@ impl Chip8 {
         trace!("ADD I, Vx {:?}", opcode);
         self.index += self.registers[opcode.x() as usize];
     }
+
+    /// LD F, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx29(&mut self, opcode: OpCode) {
+        let digit = self.registers[opcode.x() as usize];
+
+        self.index
+            .load((FONTSET_START_ADDR + (5 * digit as usize)) as u16);
+    }
 }
 
 #[cfg(test)]
@@ -471,7 +482,10 @@ mod test {
     fn load_font_set() {
         let c = Chip8::default();
 
-        assert_eq!(FONT_SET, c.memory[0x50..(0x50 + FONT_SET.len())]);
+        assert_eq!(
+            FONT_SET,
+            c.memory[FONTSET_START_ADDR..(FONTSET_START_ADDR + FONT_SET.len())]
+        );
     }
 
     #[test]
@@ -842,5 +856,18 @@ mod test {
 
         c.op_Fx1E(opcode);
         assert_eq!(11, c.index.get());
+    }
+
+    #[test]
+    fn load_digit_sprite() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF0, 0x29));
+
+        for i in 0..=0xF {
+            c.registers[0] = i;
+            c.op_Fx29(opcode);
+
+            assert_eq!(FONTSET_START_ADDR + (5 * i as usize), c.index.get());
+        }
     }
 }
