@@ -107,7 +107,7 @@ impl Chip8 {
             (0x0F, _, 0x01, 0x08) => self.op_Fx18(opcode),
             (0x0F, _, 0x01, 0x0E) => self.op_Fx1E(opcode),
             (0x0F, _, 0x02, 0x09) => self.op_Fx29(opcode),
-            (0x0F, _, 0x01, 0x33) => unimplemented!(),
+            (0x0F, _, 0x03, 0x03) => self.op_Fx33(opcode),
             (0x0F, _, 0x01, 0x55) => unimplemented!(),
             (0x0F, _, 0x01, 0x65) => unimplemented!(),
             _ => unreachable!("{:?}", opcode),
@@ -427,6 +427,17 @@ impl Chip8 {
 
         self.index
             .load((FONTSET_START_ADDR + (5 * digit as usize)) as u16);
+    }
+
+    /// LD B, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx33(&mut self, opcode: OpCode) {
+        let mut val = self.registers[opcode.x() as usize];
+
+        for i in (0..3).rev() {
+            self.memory[self.index.get() + i] = val % 10;
+            val /= 10;
+        }
     }
 }
 
@@ -869,5 +880,20 @@ mod test {
 
             assert_eq!(FONTSET_START_ADDR + (5 * i as usize), c.index.get());
         }
+    }
+
+    #[test]
+    fn load_bcd() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF0, 0x33));
+
+        c.index.load(0x200);
+        c.registers[0] = 234;
+
+        c.op_Fx33(opcode);
+
+        assert_eq!(4, c.memory[c.index.get() + 2]);
+        assert_eq!(3, c.memory[c.index.get() + 1]);
+        assert_eq!(2, c.memory[c.index.get()]);
     }
 }
