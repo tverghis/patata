@@ -1,3 +1,5 @@
+use std::ops::{Add, AddAssign};
+
 const U12_MAX: u16 = 0xFFF;
 
 #[derive(Default, Clone, Copy, Eq, PartialEq)]
@@ -25,6 +27,22 @@ impl IndexRegister {
 
     pub fn get(self) -> usize {
         self.inner as usize
+    }
+}
+
+impl Add<u8> for IndexRegister {
+    type Output = Self;
+
+    fn add(self, rhs: u8) -> Self::Output {
+        Self {
+            inner: self.inner + rhs as u16,
+        }
+    }
+}
+
+impl AddAssign<u8> for IndexRegister {
+    fn add_assign(&mut self, rhs: u8) {
+        self.inner += rhs as u16;
     }
 }
 

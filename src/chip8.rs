@@ -103,7 +103,7 @@ impl Chip8 {
             (0x0F, _, 0x00, 0x0A) => self.op_Fx0A(opcode),
             (0x0F, _, 0x01, 0x05) => self.op_Fx15(opcode),
             (0x0F, _, 0x01, 0x08) => self.op_Fx18(opcode),
-            (0x0F, _, 0x01, 0x0E) => unimplemented!(),
+            (0x0F, _, 0x01, 0x0E) => self.op_Fx1E(opcode),
             (0x0F, _, 0x01, 0x29) => unimplemented!(),
             (0x0F, _, 0x01, 0x33) => unimplemented!(),
             (0x0F, _, 0x01, 0x55) => unimplemented!(),
@@ -409,6 +409,13 @@ impl Chip8 {
         let x = opcode.x() as usize;
 
         self.sound_timer.set(self.registers[x]);
+    }
+
+    /// ADD I, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx1E(&mut self, opcode: OpCode) {
+        trace!("ADD I, Vx {:?}", opcode);
+        self.index += self.registers[opcode.x() as usize];
     }
 }
 
@@ -823,5 +830,17 @@ mod test {
 
         c.op_Fx18(opcode);
         assert_eq!(15, c.sound_timer.cur_count());
+    }
+
+    #[test]
+    fn add_to_index() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF0, 0x1E));
+
+        c.index.load(10);
+        c.registers[0] = 1;
+
+        c.op_Fx1E(opcode);
+        assert_eq!(11, c.index.get());
     }
 }
