@@ -22,6 +22,10 @@ impl IndexRegister {
         );
         self.inner = v;
     }
+
+    pub fn get(self) -> usize {
+        self.inner as usize
+    }
 }
 
 #[cfg(test)]

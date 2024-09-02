@@ -3,7 +3,13 @@
 use log::{info, trace};
 use rand::{rngs::ThreadRng, Rng};
 
-use crate::{fonts::FONT_SET, opcode::OpCode, reg::IndexRegister, timer::Timer, video::Video};
+use crate::{
+    fonts::FONT_SET,
+    opcode::OpCode,
+    reg::IndexRegister,
+    timer::Timer,
+    video::{DrawCoords, Video},
+};
 
 const MEMORY_SIZE_BYTES: usize = 4096;
 const PROG_CTR_START_ADDR: u16 = 0x200;
@@ -87,7 +93,7 @@ impl Chip8 {
                 let byte = self.rng.gen();
                 self.op_Cxkk(opcode, byte);
             }
-            (0x0D, _, _, _) => unimplemented!(),
+            (0x0D, _, _, _) => self.op_Dxyn(opcode),
             (0x0E, _, 0x09, 0x0E) => unimplemented!(),
             (0x0E, _, 0x0A, 0x01) => unimplemented!(),
             (0x0F, _, 0x00, 0x07) => unimplemented!(),
@@ -316,13 +322,28 @@ impl Chip8 {
         self.program_counter = (self.registers[0] + (opcode.nnn() as u8)) as u16;
     }
 
-    /// RND Vx, byte
+    /// RND Vx, byte, rand
     #[allow(non_snake_case)]
     fn op_Cxkk(&mut self, opcode: OpCode, rand_byte: u8) {
-        trace!("RND Vx, byte {:?}", opcode);
+        trace!("RND Vx, byte, rand {:?} {:X}", opcode, rand_byte);
         let x = opcode.x() as usize;
 
         self.registers[x] = rand_byte & opcode.kk();
+    }
+
+    /// DRW Vx, Vy, nibble
+    #[allow(non_snake_case)]
+    fn op_Dxyn(&mut self, opcode: OpCode) {
+        trace!("DRW Vx, Vy, nibble {:?}", opcode);
+        let pos_x = opcode.x();
+        let pos_y = opcode.y();
+        let coords = DrawCoords::new(pos_x, pos_y);
+
+        let height = opcode.n() as usize;
+        self.display.draw(
+            &self.memory[self.index.get()..(self.index.get() + height)],
+            &coords,
+        );
     }
 }
 
