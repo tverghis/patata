@@ -101,8 +101,8 @@ impl Chip8 {
             (0x0E, _, 0x0A, 0x01) => self.op_ExA1(opcode),
             (0x0F, _, 0x00, 0x07) => self.op_Fx07(opcode),
             (0x0F, _, 0x00, 0x0A) => self.op_Fx0A(opcode),
-            (0x0F, _, 0x01, 0x05) => unimplemented!(),
-            (0x0F, _, 0x01, 0x08) => unimplemented!(),
+            (0x0F, _, 0x01, 0x05) => self.op_Fx15(opcode),
+            (0x0F, _, 0x01, 0x08) => self.op_Fx18(opcode),
             (0x0F, _, 0x01, 0x0E) => unimplemented!(),
             (0x0F, _, 0x01, 0x29) => unimplemented!(),
             (0x0F, _, 0x01, 0x33) => unimplemented!(),
@@ -391,6 +391,24 @@ impl Chip8 {
             Some(k) => self.registers[x] = k,
             None => self.program_counter -= 2,
         };
+    }
+
+    /// LD DT, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx15(&mut self, opcode: OpCode) {
+        trace!("LD DT, Vx {:?}", opcode);
+        let x = opcode.x() as usize;
+
+        self.delay_timer.set(self.registers[x]);
+    }
+
+    /// LD ST, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx18(&mut self, opcode: OpCode) {
+        trace!("LD ST, Vx {:?}", opcode);
+        let x = opcode.x() as usize;
+
+        self.sound_timer.set(self.registers[x]);
     }
 }
 
@@ -783,5 +801,27 @@ mod test {
         c.op_Cxkk(opcode, rand_byte);
 
         assert_eq!(rand_byte & 0x01, c.registers[0]);
+    }
+
+    #[test]
+    fn set_delay_timer() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF0, 0x15));
+
+        c.registers[0] = 15;
+
+        c.op_Fx15(opcode);
+        assert_eq!(15, c.delay_timer.cur_count());
+    }
+
+    #[test]
+    fn set_sound_timer() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF0, 0x18));
+
+        c.registers[0] = 15;
+
+        c.op_Fx18(opcode);
+        assert_eq!(15, c.sound_timer.cur_count());
     }
 }

@@ -11,6 +11,10 @@ impl Timer {
     pub fn cur_count(self) -> u8 {
         self.count
     }
+
+    pub fn set(&mut self, val: u8) {
+        self.count = val;
+    }
 }
 
 #[cfg(test)]
