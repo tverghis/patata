@@ -6,9 +6,11 @@ use rand::{rngs::ThreadRng, Rng};
 use crate::{
     fonts::FONT_SET,
     opcode::OpCode,
-    reg::IndexRegister,
-    timer::Timer,
-    video::{DrawCoords, Video},
+    subsystem::{
+        reg::IndexRegister,
+        timer::Timer,
+        video::{DrawCoords, Video},
+    },
 };
 
 const MEMORY_SIZE_BYTES: usize = 4096;

@@ -1,7 +1,5 @@
 mod fonts;
 mod opcode;
-mod reg;
-mod timer;
-mod video;
+mod subsystem;
 
 pub mod chip8;
