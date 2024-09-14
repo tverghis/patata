@@ -108,7 +108,7 @@ impl Chip8 {
             (0x0F, _, 0x01, 0x0E) => self.op_Fx1E(opcode),
             (0x0F, _, 0x02, 0x09) => self.op_Fx29(opcode),
             (0x0F, _, 0x03, 0x03) => self.op_Fx33(opcode),
-            (0x0F, _, 0x01, 0x55) => unimplemented!(),
+            (0x0F, _, 0x01, 0x55) => self.op_Fx55(opcode),
             (0x0F, _, 0x01, 0x65) => unimplemented!(),
             _ => unreachable!("{:?}", opcode),
         }
@@ -437,6 +437,16 @@ impl Chip8 {
         for i in (0..3).rev() {
             self.memory[self.index.get() + i] = val % 10;
             val /= 10;
+        }
+    }
+
+    /// LD B, Vx
+    #[allow(non_snake_case)]
+    fn op_Fx55(&mut self, opcode: OpCode) {
+        let x = opcode.x() as usize;
+
+        for i in 0..=x {
+            self.memory[self.index.get() + i] = self.registers[i];
         }
     }
 }
@@ -895,5 +905,21 @@ mod test {
         assert_eq!(4, c.memory[c.index.get() + 2]);
         assert_eq!(3, c.memory[c.index.get() + 1]);
         assert_eq!(2, c.memory[c.index.get()]);
+    }
+
+    #[test]
+    fn store_registers() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF3, 0x55));
+
+        c.registers[0] = 0xDE;
+        c.registers[1] = 0xAD;
+        c.registers[2] = 0xBE;
+        c.registers[3] = 0xEF;
+
+        c.op_Fx55(opcode);
+
+        let idx = c.index.get();
+        assert_eq!([0xDE, 0xAD, 0xBE, 0xEF], c.memory[idx..=idx + 3]);
     }
 }
