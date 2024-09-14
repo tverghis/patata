@@ -13,13 +13,7 @@ impl Keypad {
     }
 
     pub fn pressed_key(&self) -> Option<u8> {
-        for i in 0..16 {
-            if self.is_key_pressed(i) {
-                return Some(i);
-            }
-        }
-
-        None
+        (0..16).find(|&i| self.is_key_pressed(i))
     }
 }
 
