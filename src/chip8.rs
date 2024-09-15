@@ -109,7 +109,7 @@ impl Chip8 {
             (0x0F, _, 0x02, 0x09) => self.op_Fx29(opcode),
             (0x0F, _, 0x03, 0x03) => self.op_Fx33(opcode),
             (0x0F, _, 0x01, 0x55) => self.op_Fx55(opcode),
-            (0x0F, _, 0x01, 0x65) => unimplemented!(),
+            (0x0F, _, 0x01, 0x65) => self.op_Fx65(opcode),
             _ => unreachable!("{:?}", opcode),
         }
 
@@ -423,6 +423,7 @@ impl Chip8 {
     /// LD F, Vx
     #[allow(non_snake_case)]
     fn op_Fx29(&mut self, opcode: OpCode) {
+        trace!("LD F, Vx {:?}", opcode);
         let digit = self.registers[opcode.x() as usize];
 
         self.index
@@ -432,6 +433,7 @@ impl Chip8 {
     /// LD B, Vx
     #[allow(non_snake_case)]
     fn op_Fx33(&mut self, opcode: OpCode) {
+        trace!("LD B, Vx {:?}", opcode);
         let mut val = self.registers[opcode.x() as usize];
 
         for i in (0..3).rev() {
@@ -440,13 +442,25 @@ impl Chip8 {
         }
     }
 
-    /// LD B, Vx
+    /// LD [I], Vx
     #[allow(non_snake_case)]
     fn op_Fx55(&mut self, opcode: OpCode) {
+        trace!("LD [I], Vx {:?}", opcode);
         let x = opcode.x() as usize;
 
         for i in 0..=x {
             self.memory[self.index.get() + i] = self.registers[i];
+        }
+    }
+
+    /// LD Vx, I
+    #[allow(non_snake_case)]
+    fn op_Fx65(&mut self, opcode: OpCode) {
+        trace!("LD Vx, I {:?}", opcode);
+        let x = opcode.x() as usize;
+
+        for i in 0..=x {
+            self.registers[i] = self.memory[self.index.get() + i];
         }
     }
 }
@@ -921,5 +935,21 @@ mod test {
 
         let idx = c.index.get();
         assert_eq!([0xDE, 0xAD, 0xBE, 0xEF], c.memory[idx..=idx + 3]);
+    }
+
+    #[test]
+    fn load_registers() {
+        let mut c = Chip8::default();
+        let opcode = OpCode::from((0xF3, 0x65));
+
+        let idx = c.index.get();
+        c.memory[idx + 0] = 0xDE;
+        c.memory[idx + 1] = 0xAD;
+        c.memory[idx + 2] = 0xBE;
+        c.memory[idx + 3] = 0xEF;
+
+        c.op_Fx65(opcode);
+
+        assert_eq!([0xDE, 0xAD, 0xBE, 0xEF], c.registers[0..=3]);
     }
 }
