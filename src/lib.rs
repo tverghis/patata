@@ -3,3 +3,4 @@ mod opcode;
 mod subsystem;
 
 pub mod chip8;
+pub mod platform;
