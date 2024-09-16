@@ -3,12 +3,13 @@ use eframe::egui;
 use crate::chip8::Chip8;
 
 pub struct DebugInterface {
+    rom_name: &'static str,
     chip8: Chip8,
 }
 
 impl DebugInterface {
-    pub fn new(chip8: Chip8) -> Self {
-        Self { chip8 }
+    pub fn new(rom_name: &'static str, chip8: Chip8) -> Self {
+        Self { rom_name, chip8 }
     }
 
     pub fn run(self) -> eframe::Result<()> {
@@ -17,7 +18,7 @@ impl DebugInterface {
             ..Default::default()
         };
         eframe::run_native(
-            "Chip8 Debugger",
+            &format!("Chip8 Debugger - {}", self.rom_name),
             options,
             Box::new(|_cc| Ok(Box::new(self))),
         )
