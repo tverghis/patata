@@ -86,6 +86,22 @@ impl eframe::App for DebugInterface {
                     ui.add_space(16.0);
                     ui.vertical(|ui| {
                         ui.monospace("Registers".to_uppercase());
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("PC").color(GREEN).monospace());
+                            ui.label(
+                                RichText::new(format!("{:03x}", self.chip8.program_counter))
+                                    .color(Color32::WHITE)
+                                    .monospace(),
+                            );
+                            ui.add_space(32.0);
+                            ui.label(RichText::new("I").color(GREEN).monospace());
+                            ui.label(
+                                RichText::new(format!("{:03x}", self.chip8.index.get()))
+                                    .color(Color32::WHITE)
+                                    .monospace(),
+                            );
+                        });
+                        ui.add_space(8.0);
                         for i in (0..16).step_by(2) {
                             let reg1_label =
                                 RichText::new(format!("V{:X}", i)).color(GREEN).monospace();
@@ -103,11 +119,33 @@ impl eframe::App for DebugInterface {
                             ui.horizontal(|ui| {
                                 ui.label(reg1_label);
                                 ui.label(reg1_val);
-                                ui.add_space(48.0);
+                                ui.add_space(32.0);
                                 ui.label(reg2_label);
                                 ui.label(reg2_val);
                             });
                         }
+                        ui.add_space(8.0);
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("DT").color(GREEN).monospace());
+                            ui.label(
+                                RichText::new(format!(
+                                    "{:02x}",
+                                    self.chip8.delay_timer.cur_count()
+                                ))
+                                .color(color_for_byte(self.chip8.delay_timer.cur_count()))
+                                .monospace(),
+                            );
+                            ui.add_space(32.0);
+                            ui.label(RichText::new("ST").color(GREEN).monospace());
+                            ui.label(
+                                RichText::new(format!(
+                                    "{:02x}",
+                                    self.chip8.sound_timer.cur_count()
+                                ))
+                                .color(color_for_byte(self.chip8.sound_timer.cur_count()))
+                                .monospace(),
+                            );
+                        });
                     });
                 },
             );
