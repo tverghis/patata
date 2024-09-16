@@ -22,7 +22,7 @@ const FONTSET_START_ADDR: usize = 0x50;
 #[derive(Debug, Clone)]
 pub struct Chip8 {
     registers: [u8; 16],
-    memory: [u8; MEMORY_SIZE_BYTES],
+    pub memory: [u8; MEMORY_SIZE_BYTES],
     index: IndexRegister,
     // `program_counter` needs to hold the maximum possible address in `memory`
     program_counter: u16,
