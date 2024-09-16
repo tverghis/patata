@@ -59,15 +59,6 @@ impl Default for Chip8 {
 }
 
 impl Chip8 {
-    pub fn load_rom_from_file(&mut self, file_name: &str) -> anyhow::Result<()> {
-        // TODO: don't read the file into memory if it's too large
-
-        info!("loading rom from file {}", file_name);
-
-        let file_bytes = std::fs::read(file_name)?;
-        self.load_rom_bytes(&file_bytes)
-    }
-
     // Reference: https://austinmorlan.com/posts/chip8_emulator/
     pub fn tick(&mut self) {
         let opcode = self.next_opcode();
@@ -117,7 +108,7 @@ impl Chip8 {
         self.sound_timer.tick();
     }
 
-    fn load_rom_bytes(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
+    pub fn load_rom(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
         let nbytes = bytes.len();
 
         if nbytes == 0 || nbytes > MAX_ROM_SIZE_BYTES {
@@ -482,8 +473,8 @@ mod test {
         let rom1 = [0u8; 1];
         let rom2 = [0u8; MAX_ROM_SIZE_BYTES];
 
-        assert!(c.load_rom_bytes(&rom1).is_ok());
-        assert!(c.load_rom_bytes(&rom2).is_ok());
+        assert!(c.load_rom(&rom1).is_ok());
+        assert!(c.load_rom(&rom2).is_ok());
     }
 
     #[test]
@@ -492,8 +483,8 @@ mod test {
         let rom1 = [0u8; 0];
         let rom2 = [0u8; MAX_ROM_SIZE_BYTES + 1];
 
-        assert!(c.load_rom_bytes(&rom1).is_err());
-        assert!(c.load_rom_bytes(&rom2).is_err());
+        assert!(c.load_rom(&rom1).is_err());
+        assert!(c.load_rom(&rom2).is_err());
     }
 
     #[test]
@@ -502,7 +493,7 @@ mod test {
         const ROM_LEN: usize = MAX_ROM_SIZE_BYTES - 10;
         let rom = [8u8; ROM_LEN];
 
-        c.load_rom_bytes(&rom).unwrap();
+        c.load_rom(&rom).unwrap();
 
         // For the length of `rom`, the bytes in `memory` should be equal to `rom`.
         assert_eq!(c.memory[0x200..(0x200 + rom.len())], rom);
@@ -526,7 +517,7 @@ mod test {
     #[test]
     fn next_opcode() {
         let mut c = Chip8::default();
-        c.load_rom_bytes(&[0xDE, 0xAD, 0xBE, 0xEF]).unwrap();
+        c.load_rom(&[0xDE, 0xAD, 0xBE, 0xEF]).unwrap();
 
         let opcode = c.next_opcode();
         assert_eq!(OpCode::from((0xDE, 0xAD)), opcode);
