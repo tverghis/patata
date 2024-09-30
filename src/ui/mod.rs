@@ -1,6 +1,6 @@
 use eframe::egui::{self, Color32, RichText};
 
-use crate::chip8::Chip8;
+use crate::Chip8Runner;
 
 const GREEN: Color32 = Color32::from_rgb(0xA0, 0xDB, 0x8E);
 
@@ -18,15 +18,15 @@ impl Default for DebugInterfaceSettings {
 
 pub struct DebugInterface {
     rom_name: &'static str,
-    chip8: Chip8,
+    runner: Chip8Runner,
     settings: DebugInterfaceSettings,
 }
 
 impl DebugInterface {
-    pub fn new(rom_name: &'static str, chip8: Chip8) -> Self {
+    pub fn new(rom_name: &'static str, runner: Chip8Runner) -> Self {
         Self {
             rom_name,
-            chip8,
+            runner,
             settings: DebugInterfaceSettings::default(),
         }
     }
@@ -57,7 +57,7 @@ impl eframe::App for DebugInterface {
                             RichText::new("Show zeroed lines").monospace(),
                         );
                         egui::ScrollArea::vertical().show(ui, |ui| {
-                            for (idx, chunk) in self.chip8.memory.chunks(16).enumerate() {
+                            for (idx, chunk) in self.runner.chip8.memory.chunks(16).enumerate() {
                                 let is_all_zeros = chunk.iter().all(|&x| x == 0);
                                 if !self.settings.mem_show_zero_lines && is_all_zeros {
                                     continue;
@@ -89,14 +89,14 @@ impl eframe::App for DebugInterface {
                         ui.horizontal(|ui| {
                             ui.label(RichText::new("PC").color(GREEN).monospace());
                             ui.label(
-                                RichText::new(format!("{:03x}", self.chip8.program_counter))
+                                RichText::new(format!("{:03x}", self.runner.chip8.program_counter))
                                     .color(Color32::WHITE)
                                     .monospace(),
                             );
                             ui.add_space(32.0);
                             ui.label(RichText::new("I").color(GREEN).monospace());
                             ui.label(
-                                RichText::new(format!("{:03x}", self.chip8.index.get()))
+                                RichText::new(format!("{:03x}", self.runner.chip8.index.get()))
                                     .color(Color32::WHITE)
                                     .monospace(),
                             );
@@ -106,16 +106,18 @@ impl eframe::App for DebugInterface {
                             let reg1_label =
                                 RichText::new(format!("V{:X}", i)).color(GREEN).monospace();
                             let reg1_val =
-                                RichText::new(format!("{:02x}", self.chip8.registers[i]))
-                                    .color(color_for_byte(self.chip8.registers[i]))
+                                RichText::new(format!("{:02x}", self.runner.chip8.registers[i]))
+                                    .color(color_for_byte(self.runner.chip8.registers[i]))
                                     .monospace();
                             let reg2_label = RichText::new(format!("V{:X}", i + 1))
                                 .color(GREEN)
                                 .monospace();
-                            let reg2_val =
-                                RichText::new(format!("{:02x}", self.chip8.registers[i + 1]))
-                                    .color(color_for_byte(self.chip8.registers[i + 1]))
-                                    .monospace();
+                            let reg2_val = RichText::new(format!(
+                                "{:02x}",
+                                self.runner.chip8.registers[i + 1]
+                            ))
+                            .color(color_for_byte(self.runner.chip8.registers[i + 1]))
+                            .monospace();
                             ui.horizontal(|ui| {
                                 ui.label(reg1_label);
                                 ui.label(reg1_val);
@@ -130,9 +132,9 @@ impl eframe::App for DebugInterface {
                             ui.label(
                                 RichText::new(format!(
                                     "{:02x}",
-                                    self.chip8.delay_timer.cur_count()
+                                    self.runner.chip8.delay_timer.cur_count()
                                 ))
-                                .color(color_for_byte(self.chip8.delay_timer.cur_count()))
+                                .color(color_for_byte(self.runner.chip8.delay_timer.cur_count()))
                                 .monospace(),
                             );
                             ui.add_space(32.0);
@@ -140,9 +142,9 @@ impl eframe::App for DebugInterface {
                             ui.label(
                                 RichText::new(format!(
                                     "{:02x}",
-                                    self.chip8.sound_timer.cur_count()
+                                    self.runner.chip8.sound_timer.cur_count()
                                 ))
-                                .color(color_for_byte(self.chip8.sound_timer.cur_count()))
+                                .color(color_for_byte(self.runner.chip8.sound_timer.cur_count()))
                                 .monospace(),
                             );
                         });

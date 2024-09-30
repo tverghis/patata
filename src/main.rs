@@ -1,7 +1,9 @@
 use std::path::Path;
 
 use anyhow::Context;
-use patata::{chip8::Chip8, ui::DebugInterface};
+use patata::chip8::Chip8;
+use patata::ui::DebugInterface;
+use patata::Chip8Runner;
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
@@ -13,10 +15,14 @@ fn main() -> anyhow::Result<()> {
     let path = std::path::PathBuf::from(&rom_file);
     let rom_bytes = std::fs::read(&path)?;
 
-    let mut c = Chip8::default();
-    c.load_rom(&rom_bytes)?;
+    let mut chip8 = Chip8::default();
+    chip8.load_rom(&rom_bytes)?;
 
-    DebugInterface::new(rom_file_name(&path), c).run().unwrap();
+    let runner = Chip8Runner::new(chip8, 700)?;
+
+    DebugInterface::new(rom_file_name(&path), runner)
+        .run()
+        .unwrap();
 
     Ok(())
 }
