@@ -1,7 +1,7 @@
 #![allow(clippy::cast_lossless)]
 
 use log::{info, trace};
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::SmallRng, Rng, SeedableRng};
 
 use crate::{
     fonts::FONT_SET,
@@ -32,7 +32,7 @@ pub struct Chip8 {
     pub sound_timer: Timer,
     keypad: Keypad,
     display: Video,
-    rng: ThreadRng,
+    rng: SmallRng,
 }
 
 impl Default for Chip8 {
@@ -53,7 +53,7 @@ impl Default for Chip8 {
             sound_timer: Timer::default(),
             keypad: Keypad::default(),
             display: Video::default(),
-            rng: ThreadRng::default(),
+            rng: SmallRng::from_entropy(),
         }
     }
 }
